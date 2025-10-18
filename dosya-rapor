@@ -1,363 +1,708 @@
+import React, { useState } from 'react';
+import { FileText, Download, Plus, Trash2, Building2, User, Calendar, Upload, Eye } from 'lucide-react';
+
+const LawOfficeReport = () => {
+  const [bureauName, setBureauName] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [logo, setLogo] = useState(null);
+  
+  const [cases, setCases] = useState([
+    {
+      id: 1,
+      opponent: '',
+      fileNo: '',
+      title: '',
+      stage: '',
+      summary: ''
+    }
+  ]);
+
+  const stages = [
+    'Dava Açılması Aşaması',
+    'Dilekçe Hazırlık',
+    'Cevap Dilekçesi Bekleniyor',
+    'Delil Toplama',
+    'Bilirkişi İncelemesi',
+    'Duruşma Aşaması',
+    'Karar Bekleniyor',
+    'Temyiz Aşaması',
+    'Kesinleşti',
+    'İcra Aşaması',
+    'Sonuçlandı'
+  ];
+
+  const addCase = () => {
+    setCases([...cases, {
+      id: Date.now(),
+      opponent: '',
+      fileNo: '',
+      title: '',
+      stage: '',
+      summary: ''
+    }]);
+  };
+
+  const removeCase = (id) => {
+    setCases(cases.filter(c => c.id !== id));
+  };
+
+  const updateCase = (id, field, value) => {
+    setCases(cases.map(c => c.id === id ? { ...c, [field]: value } : c));
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const fillExample = () => {
+    setBureauName('Yılmaz & Ortakları Hukuk Bürosu');
+    setClientName('Mehmet Demir');
+    setCases([
+      {
+        id: 1,
+        opponent: 'ABC İnşaat Sanayi ve Ticaret A.Ş.',
+        fileNo: '2024/156',
+        title: 'İşçilik Alacağı ve Kıdem Tazminatı Davası',
+        stage: 'Duruşma Aşaması',
+        summary: 'Müvekkilimizin 5 yıllık çalışması sonucu haksız fesih nedeniyle açılan dava. Son duruşmada tanık dinlemeleri tamamlandı. Bilirkişi raporu lehimize sonuçlandı. Toplam alacak tutarı 125.000 TL olarak belirlendi. Mahkeme, tarafların son sözlerini almak üzere 15 Aralık 2024 tarihine erteledi.'
+      },
+      {
+        id: 2,
+        opponent: 'Ayşe Yılmaz',
+        fileNo: '2023/892',
+        title: 'Tapu İptali ve Tescil Davası',
+        stage: 'Karar Bekleniyor',
+        summary: 'Miras yoluyla intikal eden taşınmazın tapusunun iptali ve müvekkil adına tescili talebiyle açılan dava. Tüm deliller sunuldu, bilirkişi incelemesi tamamlandı. Davalı taraf itirazlarını sundu. Mahkeme dosyayı karar için incelemeye aldı. 2 hafta içinde karar açıklanması beklenmektedir.'
+      },
+      {
+        id: 3,
+        opponent: 'Ayşe Yılmaz',
+        fileNo: '2024/445',
+        title: 'Ecrimisil Davası',
+        stage: 'Delil Toplama',
+        summary: 'Taşınmazın haksız işgali nedeniyle ecrimisil talebi ile açılan dava. Bilirkişi değerleme raporu beklenmektedir. Davalı taraf tahliye taahhüdünde bulundu ancak süresinde tahliye gerçekleşmedi.'
+      },
+      {
+        id: 4,
+        opponent: 'XYZ Gayrimenkul Yatırım A.Ş.',
+        fileNo: '2024/203',
+        title: 'Kira Alacağı ve Tahliye Davası',
+        stage: 'İcra Aşaması',
+        summary: 'Müvekkilimizin mülkiyetindeki işyerinin tahliyesi ve 8 aylık kira bedelinin tahsili davası lehimize sonuçlandı. Karar kesinleşti. İcra dosyası açıldı (İcra No: 2024/554). Tahliye için icra müdürlüğünden randevu alındı.'
+      }
+    ]);
+  };
+
+  const groupCasesByOpponent = () => {
+    const grouped = {};
+    cases.forEach(c => {
+      const opponent = c.opponent || 'Belirtilmemiş';
+      if (!grouped[opponent]) {
+        grouped[opponent] = [];
+      }
+      grouped[opponent].push(c);
+    });
+    return grouped;
+  };
+
+  const downloadPDF = () => {
+    const groupedCases = groupCasesByOpponent();
+    
+    const content = `
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hukuk Bürosu Dosya Rapor Sistemi</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Dosya Raporu - ${clientName}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            color: #1a202c;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .logo { 
+            max-height: 100px; 
+            margin-bottom: 20px;
+            filter: brightness(0) invert(1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .bureau-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.5px;
+        }
+        
+        .report-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.9);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .info-section {
+            background: linear-gradient(to right, #f8fafc, #f1f5f9);
+            padding: 30px 40px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .opponent-group {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        
+        .opponent-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #312e81 100%);
+            padding: 20px 30px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .opponent-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .opponent-icon {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .case-count {
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .cases-container {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            padding: 20px;
+        }
+        
+        .case-card {
+            background: linear-gradient(to bottom right, #ffffff, #f8fafc);
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 15px;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .case-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+            border-radius: 10px 0 0 10px;
+        }
+        
+        .case-card:last-child {
+            margin-bottom: 0;
+        }
+        
+        .case-field {
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 15px;
+            align-items: start;
+        }
+        
+        .case-field:last-child {
+            margin-bottom: 0;
+        }
+        
+        .field-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-top: 2px;
+        }
+        
+        .field-value {
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        
+        .file-no {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #1e293b;
+            background: #f1f5f9;
+            padding: 4px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        
+        .stage-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+        }
+        
+        .stage-badge::before {
+            content: '●';
+            margin-right: 6px;
+            animation: blink 2s ease-in-out infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .summary-text {
+            text-align: justify;
+            line-height: 1.8;
+            color: #475569;
+        }
+        
+        .footer {
+            margin-top: 60px;
+            padding: 30px 40px;
+            background: linear-gradient(to right, #f8fafc, #f1f5f9);
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .footer-date {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        @media print {
+            body { 
+                padding: 0;
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .opponent-group {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 via-white to-blue-50 min-h-screen">
-    <div id="app" class="p-4"></div>
+<body>
+    <div class="container">
+        <div class="header">
+            ${logo ? `<img src="${logo}" class="logo" alt="Logo">` : ''}
+            <div class="bureau-name">${bureauName || 'HUKUK BÜROSU'}</div>
+            <div class="report-title">Dosya Durum Raporu</div>
+        </div>
+        
+        <div class="info-section">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Müvekkil</div>
+                    <div class="info-value">${clientName}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Rapor Tarihi</div>
+                    <div class="info-value">${new Date(reportDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                </div>
+            </div>
+        </div>
 
-    <script>
-        const App = {
-            bureauName: '',
-            clientName: '',
-            reportDate: new Date().toISOString().split('T')[0],
-            logo: null,
-            cases: [{
-                id: 1,
-                opponent: '',
-                fileNo: '',
-                title: '',
-                stage: '',
-                summary: ''
-            }],
-            stages: [
-                'Dava Açılması Aşaması',
-                'Dilekçe Hazırlık',
-                'Cevap Dilekçesi Bekleniyor',
-                'Delil Toplama',
-                'Bilirkişi İncelemesi',
-                'Duruşma Aşaması',
-                'Karar Bekleniyor',
-                'Temyiz Aşaması',
-                'Kesinleşti',
-                'İcra Aşaması',
-                'Sonuçlandı'
-            ]
-        };
-
-        function render() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="max-w-5xl mx-auto">
-                    <div class="bg-white rounded-2xl shadow-xl p-8 mb-6 border-t-4 border-blue-900">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="bg-blue-900 p-3 rounded-xl">
-                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <h1 class="text-3xl font-bold text-gray-800">Dosya Rapor Sistemi</h1>
-                                <p class="text-gray-500">Müvekkil Dosya Durum Raporu</p>
-                            </div>
+        <div class="content">
+            ${Object.entries(groupedCases).map(([opponent, opponentCases]) => `
+                <div class="opponent-group">
+                    <div class="opponent-header">
+                        <div class="opponent-name">
+                            <span class="opponent-icon">⚖️</span>
+                            ${opponent}
                         </div>
-
-                        <div class="mb-6">
-                            <button onclick="fillExample()" class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-semibold">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
-                                Örnek Veri ile Doldur
-                            </button>
-                        </div>
-
-                        <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-                            <label class="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                                Büro Logosu (İsteğe Bağlı)
-                            </label>
-                            <input type="file" accept="image/*" onchange="handleLogoUpload(event)" class="text-sm mb-2">
-                            ${App.logo ? `<div class="mt-2"><img src="${App.logo}" alt="Logo" class="h-16 w-auto rounded"></div>` : ''}
-                        </div>
-
-                        <div class="grid md:grid-cols-3 gap-4 mb-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Büro Adı</label>
-                                <input type="text" id="bureauName" value="${App.bureauName}" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Örn: Yılmaz Hukuk Bürosu">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Müvekkil Adı *</label>
-                                <input type="text" id="clientName" value="${App.clientName}" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    placeholder="Örn: Ali Veli">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Rapor Tarihi</label>
-                                <input type="date" id="reportDate" value="${App.reportDate}" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            </div>
-                        </div>
+                        <div class="case-count">${opponentCases.length} Dosya</div>
                     </div>
-
-                    <div class="space-y-4">
-                        ${App.cases.map((caseItem, index) => `
-                            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-900">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-xl font-bold text-gray-800">Dosya ${index + 1}</h3>
-                                    ${App.cases.length > 1 ? `
-                                        <button onclick="removeCase(${caseItem.id})" 
-                                            class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                            </svg>
-                                        </button>
-                                    ` : ''}
-                                </div>
-
-                                <div class="grid md:grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Karşı Taraf *</label>
-                                        <input type="text" id="opponent_${caseItem.id}" value="${caseItem.opponent}" 
-                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            placeholder="Örn: XYZ A.Ş.">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-gray-700 mb-2">Dosya No</label>
-                                        <input type="text" id="fileNo_${caseItem.id}" value="${caseItem.fileNo}" 
-                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            placeholder="Örn: 2024/123">
+                    <div class="cases-container">
+                        ${opponentCases.map(c => `
+                            <div class="case-card">
+                                <div class="case-field">
+                                    <div class="field-label">Dosya No</div>
+                                    <div class="field-value">
+                                        <span class="file-no">${c.fileNo || '-'}</span>
                                     </div>
                                 </div>
-
-                                <div class="mb-4">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Dosya Konusu *</label>
-                                    <input type="text" id="title_${caseItem.id}" value="${caseItem.title}" 
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Örn: Alacak Davası">
+                                <div class="case-field">
+                                    <div class="field-label">Konu</div>
+                                    <div class="field-value"><strong>${c.title}</strong></div>
                                 </div>
-
-                                <div class="mb-4">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Aşama *</label>
-                                    <select id="stage_${caseItem.id}" 
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                        <option value="">Seçiniz</option>
-                                        ${App.stages.map(stage => `<option value="${stage}" ${caseItem.stage === stage ? 'selected' : ''}>${stage}</option>`).join('')}
-                                    </select>
+                                <div class="case-field">
+                                    <div class="field-label">Aşama</div>
+                                    <div class="field-value">
+                                        <span class="stage-badge">${c.stage}</span>
+                                    </div>
                                 </div>
-
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Özet *</label>
-                                    <textarea id="summary_${caseItem.id}" rows="4" 
-                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        placeholder="Dosya özeti...">${caseItem.summary}</textarea>
+                                <div class="case-field">
+                                    <div class="field-label">Durum</div>
+                                    <div class="field-value">
+                                        <div class="summary-text">${c.summary}</div>
+                                    </div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
-
-                    <div class="mt-6 flex gap-4">
-                        <button onclick="addCase()" 
-                            class="flex items-center gap-2 px-6 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors font-semibold shadow-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Yeni Dosya Ekle
-                        </button>
-
-                        <button onclick="downloadPDF()" 
-                            class="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                            </svg>
-                            Raporu İndir
-                        </button>
-                    </div>
-
-                    <div class="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-600 rounded-lg">
-                        <p class="text-sm text-gray-700">
-                            <strong>✨ Özellik:</strong> Aynı karşı tarafa ait dosyalar gruplandırılır<br>
-                            <strong>📥 PDF:</strong> İndirin → Tarayıcıda açın → Ctrl+P → PDF olarak kaydet
-                        </p>
-                    </div>
                 </div>
-            `;
-            
-            // Event listeners ekle
-            document.getElementById('bureauName')?.addEventListener('change', e => App.bureauName = e.target.value);
-            document.getElementById('clientName')?.addEventListener('change', e => App.clientName = e.target.value);
-            document.getElementById('reportDate')?.addEventListener('change', e => App.reportDate = e.target.value);
-            
-            App.cases.forEach(c => {
-                document.getElementById(`opponent_${c.id}`)?.addEventListener('change', e => c.opponent = e.target.value);
-                document.getElementById(`fileNo_${c.id}`)?.addEventListener('change', e => c.fileNo = e.target.value);
-                document.getElementById(`title_${c.id}`)?.addEventListener('change', e => c.title = e.target.value);
-                document.getElementById(`stage_${c.id}`)?.addEventListener('change', e => c.stage = e.target.value);
-                document.getElementById(`summary_${c.id}`)?.addEventListener('change', e => c.summary = e.target.value);
-            });
-        }
+            `).join('')}
+        </div>
 
-        function addCase() {
-            App.cases.push({
-                id: Date.now(),
-                opponent: '',
-                fileNo: '',
-                title: '',
-                stage: '',
-                summary: ''
-            });
-            render();
-        }
-
-        function removeCase(id) {
-            App.cases = App.cases.filter(c => c.id !== id);
-            render();
-        }
-
-        function handleLogoUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    App.logo = e.target.result;
-                    render();
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function fillExample() {
-            App.bureauName = 'Yılmaz & Ortakları Hukuk Bürosu';
-            App.clientName = 'Mehmet Demir';
-            App.cases = [
-                {
-                    id: 1,
-                    opponent: 'ABC İnşaat Sanayi ve Ticaret A.Ş.',
-                    fileNo: '2024/156',
-                    title: 'İşçilik Alacağı ve Kıdem Tazminatı Davası',
-                    stage: 'Duruşma Aşaması',
-                    summary: 'Müvekkilimizin 5 yıllık çalışması sonucu haksız fesih nedeniyle açılan dava. Bilirkişi raporu lehimize sonuçlandı. Toplam alacak tutarı 125.000 TL olarak belirlendi.'
-                },
-                {
-                    id: 2,
-                    opponent: 'Ayşe Yılmaz',
-                    fileNo: '2023/892',
-                    title: 'Tapu İptali ve Tescil Davası',
-                    stage: 'Karar Bekleniyor',
-                    summary: 'Miras yoluyla intikal eden taşınmazın tapusunun iptali davası. Tüm deliller sunuldu, mahkeme dosyayı incelemeye aldı.'
-                },
-                {
-                    id: 3,
-                    opponent: 'Ayşe Yılmaz',
-                    fileNo: '2024/445',
-                    title: 'Ecrimisil Davası',
-                    stage: 'Delil Toplama',
-                    summary: 'Taşınmazın haksız işgali nedeniyle ecrimisil davası. Bilirkişi değerleme raporu bekleniyor.'
-                },
-                {
-                    id: 4,
-                    opponent: 'XYZ Gayrimenkul A.Ş.',
-                    fileNo: '2024/203',
-                    title: 'Kira Alacağı ve Tahliye Davası',
-                    stage: 'İcra Aşaması',
-                    summary: 'Tahliye ve kira alacağı davası lehimize sonuçlandı. İcra dosyası açıldı, tahliye işlemleri devam ediyor.'
-                }
-            ];
-            render();
-        }
-
-        function groupCasesByOpponent() {
-            const grouped = {};
-            App.cases.forEach(c => {
-                const opp = c.opponent || 'Belirtilmemiş';
-                if (!grouped[opp]) grouped[opp] = [];
-                grouped[opp].push(c);
-            });
-            return grouped;
-        }
-
-        function downloadPDF() {
-            const grouped = groupCasesByOpponent();
-            
-            const html = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Dosya Raporu - ${App.clientName}</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:40px 20px;color:#1a202c}
-.container{max-width:900px;margin:0 auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)}
-.header{background:linear-gradient(135deg,#1e3a8a 0%,#3730a3 100%);padding:50px 40px;text-align:center}
-.logo{max-height:100px;margin-bottom:20px;filter:brightness(0) invert(1)}
-.bureau-name{font-size:28px;font-weight:700;color:white;margin-bottom:10px}
-.report-title{font-size:16px;font-weight:500;color:rgba(255,255,255,0.9);text-transform:uppercase;letter-spacing:2px}
-.info-section{background:linear-gradient(to right,#f8fafc,#f1f5f9);padding:30px 40px;border-bottom:1px solid #e2e8f0}
-.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-.info-label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
-.info-value{font-size:16px;font-weight:600;color:#1e293b}
-.content{padding:40px}
-.opponent-group{margin-bottom:40px;page-break-inside:avoid}
-.opponent-header{background:linear-gradient(135deg,#1e3a8a 0%,#312e81 100%);padding:20px 30px;border-radius:12px 12px 0 0}
-.opponent-name{font-size:20px;font-weight:700;color:white;margin-bottom:5px}
-.case-count{font-size:13px;font-weight:500;color:rgba(255,255,255,0.8)}
-.cases-container{background:white;border:2px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;padding:20px}
-.case-card{background:linear-gradient(to bottom right,#ffffff,#f8fafc);border:1px solid #e2e8f0;border-radius:10px;padding:25px;margin-bottom:15px;position:relative;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
-.case-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(to bottom,#3b82f6,#8b5cf6);border-radius:10px 0 0 10px}
-.case-card:last-child{margin-bottom:0}
-.case-field{margin-bottom:15px;display:grid;grid-template-columns:140px 1fr;gap:15px}
-.field-label{font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase}
-.field-value{font-size:14px;color:#334155;line-height:1.6}
-.file-no{font-family:'Courier New',monospace;font-weight:600;color:#1e293b;background:#f1f5f9;padding:4px 12px;border-radius:6px;display:inline-block}
-.stage-badge{display:inline-flex;align-items:center;padding:6px 14px;background:linear-gradient(135deg,#10b981,#059669);color:white;border-radius:20px;font-size:12px;font-weight:600;text-transform:uppercase}
-.summary-text{text-align:justify;line-height:1.8;color:#475569}
-.footer{padding:30px 40px;background:linear-gradient(to right,#f8fafc,#f1f5f9);border-top:1px solid #e2e8f0;text-align:center}
-.footer-text{font-size:12px;color:#64748b}
-@media print{body{padding:0;background:white}.container{box-shadow:none}}
-</style></head><body>
-<div class="container">
-<div class="header">
-${App.logo ? `<img src="${App.logo}" class="logo">` : ''}
-<div class="bureau-name">${App.bureauName || 'HUKUK BÜROSU'}</div>
-<div class="report-title">Dosya Durum Raporu</div>
-</div>
-<div class="info-section">
-<div class="info-grid">
-<div><div class="info-label">Müvekkil</div><div class="info-value">${App.clientName}</div></div>
-<div><div class="info-label">Rapor Tarihi</div><div class="info-value">${new Date(App.reportDate).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})}</div></div>
-</div></div>
-<div class="content">
-${Object.entries(grouped).map(([opp,cases])=>`
-<div class="opponent-group">
-<div class="opponent-header">
-<div class="opponent-name">⚖️ ${opp}</div>
-<div class="case-count">${cases.length} Dosya</div>
-</div>
-<div class="cases-container">
-${cases.map(c=>`
-<div class="case-card">
-<div class="case-field"><div class="field-label">Dosya No</div><div class="field-value"><span class="file-no">${c.fileNo||'-'}</span></div></div>
-<div class="case-field"><div class="field-label">Konu</div><div class="field-value"><strong>${c.title}</strong></div></div>
-<div class="case-field"><div class="field-label">Aşama</div><div class="field-value"><span class="stage-badge">${c.stage}</span></div></div>
-<div class="case-field"><div class="field-label">Durum</div><div class="field-value"><div class="summary-text">${c.summary}</div></div></div>
-</div>
-`).join('')}
-</div></div>
-`).join('')}
-</div>
-<div class="footer"><div class="footer-text">Bu rapor ${new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})} tarihinde hazırlanmıştır.</div></div>
-</div></body></html>`;
-
-            const blob = new Blob([html], {type: 'text/html'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `dosya-raporu-${App.clientName.replace(/\s+/g,'-')}-${App.reportDate}.html`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            setTimeout(() => alert('✅ Rapor indirildi!\n\n📝 PDF yapmak için:\n1. İndirilen dosyayı tarayıcıda açın\n2. Ctrl+P (Mac: Cmd+P) basın\n3. "PDF olarak kaydet" seçin'), 300);
-        }
-
-        // İlk render
-        render();
-    </script>
+        <div class="footer">
+            <div class="footer-text">
+                Bu rapor <span class="footer-date">${new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span> tarihinde ${bureauName || 'hukuk bürosu'} tarafından hazırlanmıştır.
+            </div>
+        </div>
+    </div>
 </body>
-</html>
+</html>`;
+
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dosya-raporu-${clientName.replace(/\s+/g, '-')}-${reportDate}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setTimeout(() => {
+      alert('✅ Rapor indirildi!\n\n📋 PDF\'e dönüştürmek için:\n1. İndirilen HTML dosyasını tarayıcıda açın\n2. Ctrl+P (veya Cmd+P) basın\n3. "PDF olarak kaydet" seçin');
+    }, 500);
+  };
+
+  const isFormValid = clientName && cases.every(c => c.opponent && c.title && c.stage && c.summary);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4">
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-6 border-t-4 border-blue-900">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-900 p-3 rounded-xl">
+                <FileText className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">Dosya Rapor Sistemi</h1>
+                <p className="text-gray-500">Müvekkil Dosya Durum Raporu</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <button
+              onClick={fillExample}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-semibold"
+            >
+              <Eye className="w-4 h-4" />
+              Örnek Veri ile Doldur (Ayşe Yılmaz'ın 2 dosyası var)
+            </button>
+          </div>
+
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+              <Upload className="w-4 h-4" />
+              Büro Logosu (İsteğe Bağlı)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="text-sm"
+            />
+            {logo && (
+              <div className="mt-2">
+                <img src={logo} alt="Logo" className="h-16 w-auto rounded" />
+              </div>
+            )}
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <Building2 className="w-4 h-4" />
+                Büro Adı
+              </label>
+              <input
+                type="text"
+                value={bureauName}
+                onChange={(e) => setBureauName(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Örn: Yılmaz Hukuk Bürosu"
+              />
+            </div>
+            
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <User className="w-4 h-4" />
+                Müvekkil Adı *
+              </label>
+              <input
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Örn: Ali Veli"
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <Calendar className="w-4 h-4" />
+                Rapor Tarihi
+              </label>
+              <input
+                type="date"
+                value={reportDate}
+                onChange={(e) => setReportDate(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {cases.map((caseItem, index) => (
+            <div key={caseItem.id} className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-900">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-800">Dosya {index + 1}</h3>
+                {cases.length > 1 && (
+                  <button
+                    onClick={() => removeCase(caseItem.id)}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Karşı Taraf (Muhatap) *
+                  </label>
+                  <input
+                    type="text"
+                    value={caseItem.opponent}
+                    onChange={(e) => updateCase(caseItem.id, 'opponent', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Örn: XYZ A.Ş. / Ahmet Yılmaz"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Dosya No
+                  </label>
+                  <input
+                    type="text"
+                    value={caseItem.fileNo}
+                    onChange={(e) => updateCase(caseItem.id, 'fileNo', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Örn: 2024/123"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Dosya Konusu *
+                </label>
+                <input
+                  type="text"
+                  value={caseItem.title}
+                  onChange={(e) => updateCase(caseItem.id, 'title', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Örn: Alacak Davası / İşe İade Davası"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Dosya Aşaması *
+                </label>
+                <select
+                  value={caseItem.stage}
+                  onChange={(e) => updateCase(caseItem.id, 'stage', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Aşama Seçiniz</option>
+                  {stages.map(stage => (
+                    <option key={stage} value={stage}>{stage}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Özet Bilgi *
+                </label>
+                <textarea
+                  value={caseItem.summary}
+                  onChange={(e) => updateCase(caseItem.id, 'summary', e.target.value)}
+                  rows="4"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Dosyanın mevcut durumu, son gelişmeler ve yapılan işlemler hakkında özet bilgi..."
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 flex gap-4">
+          <button
+            onClick={addCase}
+            className="flex items-center gap-2 px-6 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors font-semibold shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            Yeni Dosya Ekle
+          </button>
+
+          <button
+            onClick={downloadPDF}
+            disabled={!isFormValid}
+            className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            <Download className="w-5 h-5" />
+            Raporu İndir
+          </button>
+        </div>
+
+        <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-600 rounded-lg">
+          <p className="text-sm text-gray-700">
+            <strong>✨ Yeni Özellik:</strong> Aynı karşı tarafa ait tüm dosyalar tek çatı altında gruplandırılır.<br/>
+            <strong>📥 PDF için:</strong> Raporu indirin → Tarayıcıda açın → Ctrl+P → "PDF olarak kaydet"
+          </p>
+        </div>
+
+        <p className="mt-4 text-sm text-gray-500">
+          * işaretli alanlar zorunludur.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default LawOfficeReport;
